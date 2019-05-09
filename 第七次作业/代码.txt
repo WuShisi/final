@@ -1,0 +1,73 @@
+#include "stdafx.h"
+#include<opencv2/opencv.hpp>
+#include<opencv2/highgui/highgui.hpp>
+#include<math.h>
+#include<string>
+#include<iostream>
+#include<vector>
+#include "opencv2/stitching.hpp"
+#include<time.h>
+using namespace cv;
+using namespace std;
+int main()
+{
+	Mat sobel(Mat p, int po);
+	Mat input = imread("C:\\Users\\Lenovo\\Desktop\\作业-直线检测\\作业-直线检测\\test1.tif");
+	Mat output_canny;
+	Mat output_sobel;
+	Mat output_canny1;
+	Mat output_sobel1;
+	Mat gray;
+	Mat output_canny2;
+	Mat output_sobel2;
+	output_canny2 = input.clone();
+	output_sobel2 = input.clone();
+	cvtColor(input, gray, CV_BGR2GRAY);
+	Canny(gray , output_canny,20,80);
+	output_sobel = sobel(gray,40);
+	output_canny1 = output_canny.clone();
+	output_sobel1 = output_sobel.clone();
+	vector<Vec4f>plines_c;//定义一个存放直线信息的向量
+	HoughLinesP(output_canny, plines_c, 1, CV_PI / 180, 70, 70, 10);
+	for (int i = 0; i < plines_c.size(); i++)
+	{
+		Vec4f point1 = plines_c[i];
+		//cvtColor(output_canny, output_canny, CV_GRAY2BGR);
+		line(output_canny2, Point(point1[0], point1[1]), Point(point1[2], point1[3]), Scalar(255, 0, 0), 1, LINE_AA);
+	}
+	vector<Vec4f>plines_s;//定义一个存放直线信息的向量
+	HoughLinesP(output_sobel, plines_s, 1, CV_PI / 180, 70, 70, 10);
+	for (int i = 0; i < plines_s.size(); i++)
+	{
+		Vec4f point2 = plines_s[i];
+		//cvtColor(output_sobel, output_sobel, CV_GRAY2BGR);
+		line(output_sobel2, Point(point2[0], point2[1]), Point(point2[2], point2[3]), Scalar(255, 0, 0), 1, LINE_AA);
+	}
+	cvNamedWindow("canny",0);
+	cvNamedWindow("canny_hough", 0);
+	cvNamedWindow("sobel", 0);
+	cvNamedWindow("sobel_hough", 0);
+	imshow("canny", output_canny1);
+	imshow("sobel", output_sobel1);
+	imshow("canny_hough", output_canny2);
+	imshow("sobel_hough", output_sobel2);
+	cvWaitKey();
+
+}
+Mat sobel(Mat p,int po)
+{
+	Mat smooth;
+	Mat result;
+	result = p.clone();
+	GaussianBlur(p, smooth, Size(3, 3), 0, 0);
+	Mat grad_x, grad_y;
+	Mat abs_grad_x, abs_grad_y, dst;
+	Sobel(p, grad_x, CV_16S, 1, 0, 3, 1, 1, BORDER_DEFAULT);
+	convertScaleAbs(grad_x, abs_grad_x);
+	Sobel(p, grad_y, CV_16S, 0, 1, 3, 1, 1, BORDER_DEFAULT);
+	convertScaleAbs(grad_y, abs_grad_y);
+	addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, result);
+    threshold(result, result, po, 255, CV_THRESH_BINARY);
+	return result;
+
+}
